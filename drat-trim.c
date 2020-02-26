@@ -267,6 +267,23 @@ void printCore (struct solver *S) {
         fprintf (coreFile, "0\n"); } }
     fclose (coreFile); } }
 
+void printCoreIndices (struct solver *S) {
+  int i, j;
+  for (i = 0; i < S->nClauses; i++) {
+    int *clause = S->DB + (S->formula[i] >> INFOBITS);
+    if (clause[ID] & ACTIVE) S->COREcount++; }
+  printf ("\rc %i of %li clauses in core                            \n", S->COREcount, S->nClauses);
+
+  if (S->coreStr) {
+    FILE *coreFile = fopen (S->coreStr, "w");
+    fprintf (coreFile, "p cnf %i %i\n", S->nVars, S->COREcount);
+    for (i = 0; i < S->nClauses; i++) {
+      int *clause = S->DB + (S->formula[i] >> INFOBITS);
+      if (clause[ID] & ACTIVE) {
+        while (*clause) fprintf (coreFile, "%i ", *clause++);
+        fprintf (coreFile, "0 %i\n", i); } }
+    fclose (coreFile); } }
+
 void write_lit (struct solver *S, FILE *output, int lit) { // change to long?
   unsigned int l = abs (lit) << 1;
   if (lit < 0) l++;
@@ -432,7 +449,7 @@ void printActive (struct solver *S) {
 void postprocess (struct solver *S) {
   printNoCore (S);   // print before proof optimization
   printActive (S);
-  printCore   (S);
+  printCoreIndices   (S);
   printTrace  (S);   // closes traceFile
   printProof  (S); } // closes lratFile
 
